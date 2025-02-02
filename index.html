@@ -1,1 +1,192 @@
-a
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalla de Definiciones - Biología</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+        }
+        #game-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3);
+            display: inline-block;
+            color: black;
+            width: 60%;
+        }
+        #question {
+            font-size: 26px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            padding: 20px;
+        }
+        input {
+            padding: 15px;
+            width: 90%;
+            margin-bottom: 10px;
+            font-size: 22px;
+            text-align: center;
+            border-radius: 5px;
+            border: 2px solid #4CAF50;
+        }
+        button {
+            padding: 15px 25px;
+            font-size: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #45a049;
+            transform: scale(1.1);
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        #score, #reward, #timer {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #timer {
+            color: red;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+        .correct-answer {
+            color: green;
+            font-size: 26px;
+            font-weight: bold;
+            animation: pop 0.5s ease-in-out;
+        }
+        .wrong-answer {
+            color: red;
+            font-size: 26px;
+            font-weight: bold;
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes pop {
+            0% { transform: scale(0.8); }
+            100% { transform: scale(1.2); }
+        }
+        @keyframes shake {
+            0% { transform: translateX(-10px); }
+            25% { transform: translateX(10px); }
+            50% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+            100% { transform: translateX(0px); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>🎯 Batalla de Definiciones 🎯</h1>
+    <div id="question">Cargando pregunta...</div>
+    <div id="timer">Tiempo restante: 30s</div>
+    <input type="text" id="answer" placeholder="Escribe tu respuesta aquí">
+    <button onclick="checkAnswer()">Responder</button>
+    <div id="result"></div>
+    <div id="score">Puntuación: 0</div>
+    <div id="reward">Tiempo de juego ganado: 0 minutos</div>
+</div>
+
+<script>
+    const questions = [
+        ["Mitocondria", "Organelo encargado de la producción de energía en la célula mediante la respiración celular."],
+        ["Fotosíntesis", "Proceso mediante el cual las plantas convierten la luz solar en energía química."],
+        ["ADN", "Molécula que contiene la información genética de los seres vivos."],
+        ["Célula", "Unidad básica de la vida en todos los organismos."],
+        ["Homeostasis", "Capacidad de un organismo para mantener un ambiente interno estable."],
+        ["Neuronas", "Células especializadas en la transmisión de impulsos nerviosos."],
+        ["Cloroplasto", "Organelo de las células vegetales donde ocurre la fotosíntesis."],
+        ["Metabolismo", "Conjunto de reacciones químicas que ocurren en un organismo para mantener la vida."],
+        ["Ecosistema", "Conjunto de organismos y su entorno en un área determinada."],
+        ["Enzima", "Proteína que acelera las reacciones químicas en un organismo."],
+        ["Nutrición", "Función vital que involucra los aparatos digestivo, respiratorio, circulatorio y excretor."],
+        ["Relación", "Función vital en la que intervienen el sistema nervioso, locomotor y endocrino."],
+        ["Reproducción", "Función vital a cargo del aparato reproductor."],
+        ["Aparato digestivo", "Encargado de la ingestión, digestión, absorción y eliminación de los alimentos."],
+        ["Intestino delgado", "Órgano donde ocurre la absorción de nutrientes al torrente sanguíneo."]
+    ];
+
+    let score = 0;
+    let currentQuestionIndex = 0;
+    let gameTime = 0;
+    let questionTime = 30; // Aumentado a 30 segundos
+    let roundLimit = 15;
+    let timer;
+
+    function shuffleQuestions() {
+        questions.sort(() => Math.random() - 0.5);
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex < roundLimit && currentQuestionIndex < questions.length) {
+            document.getElementById("question").innerText = questions[currentQuestionIndex][1];
+            document.getElementById("answer").value = "";
+            document.getElementById("result").innerText = "";
+            document.getElementById("timer").innerText = `Tiempo restante: ${questionTime}s`;
+
+            let timeLeft = questionTime;
+            timer = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    document.getElementById("timer").innerText = `Tiempo restante: ${timeLeft}s`;
+                } else {
+                    clearInterval(timer);
+                    checkAnswer(true);
+                }
+            }, 1000);
+        } else {
+            document.getElementById("game-container").innerHTML = `<h1>🎉 Juego terminado 🎉</h1>
+                <p>Puntuación final: ${score}/${roundLimit}</p>
+                <p>⏳ Tiempo total ganado: ${gameTime} minutos</p>`;
+        }
+    }
+
+    function checkAnswer(timeout = false) {
+        clearInterval(timer);
+        let userAnswer = document.getElementById("answer").value.trim().toLowerCase();
+        let correctAnswer = questions[currentQuestionIndex][0].toLowerCase();
+        let resultDiv = document.getElementById("result");
+
+        if (!timeout && userAnswer === correctAnswer) {
+            resultDiv.innerHTML = "✅ ¡Correcto! +1 minuto de juego";
+            resultDiv.className = "correct-answer";
+            score++;
+            gameTime += 1;
+        } else {
+            resultDiv.innerHTML = `❌ Incorrecto. La respuesta correcta era: ${questions[currentQuestionIndex][0]} -3 minutos`;
+            resultDiv.className = "wrong-answer";
+            gameTime -= 3;
+            if (gameTime < 0) gameTime = 0;
+        }
+
+        document.getElementById("score").innerText = `Puntuación: ${score}`;
+        document.getElementById("reward").innerText = `Tiempo de juego ganado: ${gameTime} minutos`;
+
+        currentQuestionIndex++;
+        setTimeout(loadQuestion, 2000);
+    }
+
+    shuffleQuestions();
+    loadQuestion();
+</script>
+
+</body>
+</html>
